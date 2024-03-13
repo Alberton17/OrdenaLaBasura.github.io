@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ordena La Basura!</title>
+  <style>
+    * {
+        padding: 15px;
+        margin: 10px;
+    }
+    canvas {
+        background: #000000;
+        display: block;
+        margin: 10px;
+    }
+  </style>
+</head>
+<body>
+  <button id="btIniciar" onclick="Principal()">Iniciar juego</button>
+  <label id="Puntaje">Puntaje: </label>
+  <label id="Tapas"></label>
+
+<canvas id="canvas" width="1300" height="550"></canvas>
+<script>
+  var cons = 0;
+  var canvas = document.getElementById("canvas");
+  var ctx = canvas.getContext("2d");
+  var canvasWidth = canvas.width;
+  var canvasHeight = canvas.height;
+  var buffer = document.createElement("canvas");
+  buffer.width = canvasWidth;
+  buffer.height = canvasHeight;
+  var ctxBuffer = buffer.getContext("2d");
+
+  var imgFondo = new Image();
+  var imgArb = new Image();
+  var imgAlumno = new Image();
+  var imgBotes =[ new Image(), new Image()];
+  var ImgesDesecho = [];
+  imgArb.src = "Arb.png";
+  imgFondo.src = "imgFondo.jpg";
+  imgAlumno.src = "imgalumno.png";
+  
+  imgDesechos = ["Man.png", "Bot.png", "Char.png", "Lat.png", "Pla.png"];
+  
+
+  var AlumnX = -300;
+  var DesY = 1;
+  var dragging = false;
+  var offsetX, offsetY;
+  var draggedIndex = -1;
+  var InitnumDes = 0;
+  var numDes = 0;
+  var contiempo = 0;
+
+  canvas.onmousedown = function(e) {
+    var mouseX = e.clientX - canvas.offsetLeft;
+    var mouseY = e.clientY - canvas.offsetTop;
+
+    for (var i = 0; i < ImgesDesecho.length; i++) {
+      var imgX = ImgesDesecho[i].x;
+      var imgY = ImgesDesecho[i].y;
+
+      if (mouseX > imgX && mouseX < imgX + 100 && mouseY > imgY && mouseY < imgY + 100) {
+        offsetX = mouseX - imgX;
+        offsetY = mouseY - imgY;
+        dragging = true;
+        draggedIndex = i;
+        break;
+      }
+    }
+  };
+
+  canvas.onmousemove = function(e) {
+    if (dragging) {
+      var mouseX = e.clientX - canvas.offsetLeft;
+      var mouseY = e.clientY - canvas.offsetTop;
+
+      if (dragging && mouseX > 0 && mouseX < canvasWidth && mouseY > 0 && mouseY < canvasHeight) {
+        ImgesDesecho[draggedIndex].x = mouseX - offsetX;
+        ImgesDesecho[draggedIndex].y = mouseY - offsetY;
+      }
+    }
+  };
+
+  canvas.onmouseup = function() {
+    if (dragging != false) {
+        if (ImgesDesecho[draggedIndex].x < 20 || ImgesDesecho[draggedIndex].x > 700 || 
+            ImgesDesecho[draggedIndex].y < 300 || ImgesDesecho[draggedIndex].y > 550) {
+            ultX = ImgesDesecho[draggedIndex].x;
+            ultY = ImgesDesecho[draggedIndex].y;
+            dibujaPuntos(0, ultX, ultY);
+            ImgesDesecho.splice(draggedIndex, 1);
+            cons=cons-2;
+        }
+        else{
+            ultX = ImgesDesecho[draggedIndex].x;
+            ultY = ImgesDesecho[draggedIndex].y;
+            dibujaPuntos(1, ultX, ultY);
+            ImgesDesecho.splice(draggedIndex, 1);
+            cons=cons+1;
+        }
+        dragging = false;
+        draggedIndex = -1;
+    }
+
+  };
+
+  numDes = 0; // Define numDes antes del bucle
+
+  function generarNuevasImagenesDesecho() {
+    for (var i = 0; i < 5; i++) {
+        var randomDes = Math.floor(Math.random() * imgDesechos.length);
+        ImgesDesecho.push({ image: new Image(), x: (i+2)*100, y: 300 });
+        ImgesDesecho[ImgesDesecho.length - 1].image.src = imgDesechos[randomDes];
+    }
+    
+    // Llamar a la función dibujarDesecho para que dibuje las nuevas imágenes
+    dibujarDesecho();
+}
+
+
+  function Principal() {
+    document.getElementById("btIniciar").textContent = "PAUSA"
+    document.getElementById("btIniciar").onclick =null;
+    puntaje();
+    dibujarAlumno();
+
+    
+  }
+
+  function dibujarAlumno() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    ctx.drawImage(imgFondo, 0, 0, canvasWidth, canvasHeight);
+    ctx.drawImage(imgArb, 0, 425, 650, 300);
+    ctx.drawImage(imgArb, 650, 425, 650, 300);
+
+    ctx.drawImage(imgAlumno, AlumnX, 150, 1000, 650);
+    
+    AlumnX = AlumnX + 1;
+
+    if (AlumnX == 200) {
+      generarNuevasImagenesDesecho();
+    }
+
+    if (AlumnX >= 1300) {
+      AlumnX = -300;
+    }
+
+    setTimeout(dibujarAlumno, 3);
+  }
+
+  function dibujarDesecho() {
+
+    for (var i = 0; i < ImgesDesecho.length; i++) {
+        ctx.drawImage(ImgesDesecho[i].image, ImgesDesecho[i].x, ImgesDesecho[i].y, 100, 100);
+    }
+
+    requestAnimationFrame(dibujarDesecho);
+}
+
+function dibujaPuntos(SIoNo, x, y){
+  if(SIoNo==1){
+  ctx.fillStyle = "green";
+  ctx.fillText("+1 PUNTO", x, y);
+  }else{
+    ctx.fillStyle = "red";
+    ctx.fillText("-1 PUNTO", x, y);
+  }
+
+  setTimeout(function() {
+    ctx.clearRect(x, y - 10, 100, 10); // Se borra solo el texto
+  }, 1000);
+}
+function puntaje(){
+  document.getElementById("Puntaje").textContent = "Puntaje: " + cons;
+  setTimeout(puntaje, 3);
+}
+
+
+
+
+
+
+
+
+</script>
+
+</body>
+</html>
